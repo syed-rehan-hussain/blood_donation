@@ -127,6 +127,45 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListDonorsView(generics.ListAPIView):
+    queryset = User.objects.filter(is_deleted=False, role='3')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            query_set = User.objects.filter(is_deleted=False, role='3')
+            if query_set.exists():
+                result = []
+                user_detail = query_set.values('id', 'first_name', 'last_name', 'email', 'phone_number', 'image_url',
+                                               'dob', 'gender', 'city', 'address', 'university_name', 'seat_no',
+                                               'blood_group', 'no_of_donations')
+                for user in user_detail:
+                    university_name = UniversityName.objects.get(pk=user_detail[0]["university_name"], is_deleted=False)
+                    ctx = {'id': user["id"],
+                           'first_name': user["first_name"],
+                           'last_name': user["last_name"],
+                           'email': user["email"],
+                           'phone_number': user["phone_number"],
+                           'image_url': user["image_url"],
+                           'dob': user["dob"],
+                           'gender': User.TYPE_CHOICES[int(user["gender"]) - 1][1],
+                           'city': user["city"],
+                           'address': user["address"],
+                           'university_name': university_name.name,
+                           'seat_no': user["seat_no"],
+                           'blood_group': user["blood_group"],
+                           'no_of_donations': user["no_of_donations"]}
+                    result.append(ctx)
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+
+                return Response({'message': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 class UniversityNameView(generics.ListCreateAPIView):
     queryset = UniversityName.objects.filter(is_deleted=False)
     serializer_class = UniversityNameSerializer
@@ -153,18 +192,114 @@ class CategoryRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 class PostView(generics.ListCreateAPIView):
     queryset = Post.objects.filter(is_deleted=False)
-    serializer_class = CategorySerializer
+    serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            query_set = Post.objects.filter(is_deleted=False)
+            if query_set.exists():
+                result = []
+                post_detail = query_set.values('id', 'image_url', 'title', 'slug', 'author', 'category',
+                                               'content', 'status')
+                for post in post_detail:
+                    category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
+
+                    ctx = {'id': post["id"],
+                           'image_url': post["image_url"],
+                           'title': post["title"],
+                           'slug': post["slug"],
+                           'author': post["author"],
+                           'image_url': post["image_url"],
+                           'category': category_name.name,
+                           'content': post["content"],
+                           'status': Post.STATUS[int(post["status"]) - 1][1]
+                           }
+                    result.append(ctx)
+                return Response(result, status=status.HTTP_200_OK)
+
+            else:
+                return Response({'message': 'Blog Post does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PublishedPostView(generics.ListAPIView):
+    queryset = Post.objects.filter(is_deleted=False, status='2')
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            query_set = Post.objects.filter(is_deleted=False, status='2')
+            if query_set.exists():
+                result = []
+                post_detail = query_set.values('id', 'image_url', 'title', 'slug', 'author', 'category',
+                                               'content', 'status')
+                for post in post_detail:
+                    category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
+
+                    ctx = {'id': post["id"],
+                           'image_url': post["image_url"],
+                           'title': post["title"],
+                           'slug': post["slug"],
+                           'author': post["author"],
+                           'image_url': post["image_url"],
+                           'category': category_name.name,
+                           'content': post["content"],
+                           'status': Post.STATUS[int(post["status"]) - 1][1]
+                           }
+                    result.append(ctx)
+                return Response(result, status=status.HTTP_200_OK)
+
+            else:
+                return Response({'message': 'Blog Post does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.filter(is_deleted=False)
-    serializer_class = CategorySerializer
+    serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            query_set = Post.objects.filter(pk=pk, is_deleted=False)
+            if query_set.exists():
+                post_detail = query_set.values('id', 'image_url', 'title', 'slug', 'author', 'category',
+                                               'content', 'status')
+                category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
+
+                ctx = {'id': post_detail[0]["id"],
+                       'image_url': post_detail[0]["image_url"],
+                       'title': post_detail[0]["title"],
+                       'slug': post_detail[0]["slug"],
+                       'author': post_detail[0]["author"],
+                       'image_url': post_detail[0]["image_url"],
+                       'category': category_name.name,
+                       'content': post_detail[0]["content"],
+                       'status': Post.STATUS[int(post_detail[0]["status"]) - 1][1]
+                       }
+                return Response(ctx, status=status.HTTP_200_OK)
+
+            else:
+                return Response({'message': 'Blog Post does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EventView(generics.ListCreateAPIView):
     queryset = Event.objects.filter(is_deleted=False)
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class PublishedEventView(generics.ListAPIView):
+    queryset = Event.objects.filter(is_deleted=False, status="2")
     serializer_class = EventSerializer
     permission_classes = [IsAuthenticated]
 

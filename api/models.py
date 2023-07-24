@@ -138,7 +138,7 @@ class Post(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_posts')
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, related_name='post_category')
     content = models.TextField()
-    status = models.IntegerField(choices=STATUS, default=1)
+    status = models.IntegerField(choices=STATUS, default=2)
 
     def __str__(self):
         return self.title
@@ -147,10 +147,10 @@ class Post(BaseModel):
 class Event(BaseModel):
 
     STATUS = (
-        (0, "Draft"),
-        (1, "Publish")
+        (1, "Draft"),
+        (2, "Publish")
     )
-    models.ImageField(upload_to='images/', blank=True, null=True)
+    image_url = models.ImageField(upload_to='images/', blank=True, null=True)
     event_name = models.CharField(max_length=200, unique=True)
     date_of_event = models.DateField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
@@ -160,7 +160,7 @@ class Event(BaseModel):
     city = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=500, null=True, blank=True)
     content = models.TextField()
-    status = models.IntegerField(choices=STATUS, default=1)
+    status = models.IntegerField(choices=STATUS, default=2)
 
     def __str__(self):
         return self.title
