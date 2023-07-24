@@ -8,7 +8,7 @@ def required(value):
         raise serializers.ValidationError('This field is required')
 
 
-class UserSerializer(serializers.ModelSerializer):
+class DonorSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(validators=[required])
     last_name = serializers.CharField(validators=[required])
     phone_number = serializers.CharField(validators=[required])
@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
     role = serializers.CharField(validators=[required])
 
     class Meta:
-        model = User
+        model = Donor
         fields = ['id', 'first_name', 'last_name', 'email', 'password', 'phone_number', 'gender', 'dob',
                   'university_name', 'seat_no', 'role', 'city', 'address', 'blood_group',
                   'no_of_donations', 'image_url']
@@ -32,7 +32,7 @@ class LoginSerializer(serializers.ModelSerializer):
     password = serializers.CharField()
 
     class Meta:
-        model = User
+        model = Donor
         fields = ['email', 'password']
 
 
@@ -40,7 +40,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     class Meta:
-        model = User
+        model = Donor
         fields = ['email']
 
 
@@ -49,7 +49,7 @@ class UpdatePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField()
 
     class Meta:
-        model = User
+        model = Donor
         fields = ['password', 'new_password', ]
 
 

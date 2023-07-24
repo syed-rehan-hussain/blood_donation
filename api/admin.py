@@ -3,6 +3,8 @@ from api.models import *
 
 # Register your models here.
 admin.site.register(User)
+admin.site.register(Donor)
+admin.site.register(Hospital)
 admin.site.register(UniversityName)
 admin.site.register(Category)
 admin.site.register(Post)

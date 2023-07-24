@@ -86,30 +86,20 @@ def user_directory_path(instance, filename):
 
 
 class User(AbstractUser, BaseModel):
-    TYPE_CHOICES = (
-        ('1', 'Male'),
-        ('2', 'Female'),
-        ('3', 'Other'),
-    )
     ROLE = (
         ('1', 'Admin'),
         ('2', 'Staff'),
         ('3', 'Donor'),
         ('4', 'Doctor'),
+        ('5', 'Hospital'),
     )
     username = None
-    email = models.EmailField(_('email address'), unique=True)
-    phone_number = models.CharField(max_length=14)
-    image_url = models.ImageField(upload_to=user_directory_path, blank=True, null=True)
-    dob = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=10, null=True, choices=TYPE_CHOICES)
     role = models.CharField(max_length=10, null=True, choices=ROLE)
+    email = models.EmailField(_('email address'), unique=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    image_url = models.ImageField(upload_to=user_directory_path, blank=True, null=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=500, null=True, blank=True)
-    university_name = models.ForeignKey(UniversityName, on_delete=models.CASCADE, null=True, related_name='university')
-    seat_no = models.CharField(max_length=25, null=True, blank=True)
-    blood_group = models.CharField(max_length=5, null=True, blank=True)
-    no_of_donations = models.IntegerField(null=False, default=0)
     banned = models.BooleanField(null=False, default=False)
 
     USERNAME_FIELD = 'email'
@@ -117,17 +107,45 @@ class User(AbstractUser, BaseModel):
 
     objects = CustomUserManager()
 
+    def __str__(self):
+        return self.email
+
+
+class Donor(User):
+    TYPE_CHOICES = (
+        ('1', 'Male'),
+        ('2', 'Female'),
+        ('3', 'Other'),
+    )
+    dob = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, null=True, choices=TYPE_CHOICES)
+    university_name = models.ForeignKey(UniversityName, on_delete=models.CASCADE, null=True, related_name='university')
+    seat_no = models.CharField(max_length=25, null=True, blank=True)
+    blood_group = models.CharField(max_length=5, null=True, blank=True)
+    no_of_donations = models.IntegerField(null=False, default=0)
+
     class Meta:
-        db_table = 'user'
-        verbose_name = 'user'
-        verbose_name_plural = 'users'
+        db_table = 'donor'
+        verbose_name = 'donor'
+        verbose_name_plural = 'donors'
+
+    def __str__(self):
+        return self.email
+
+
+class Hospital(User):
+    hospital_name = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        db_table = 'hospital'
+        verbose_name = 'hospital'
+        verbose_name_plural = 'hospitals'
 
     def __str__(self):
         return self.email
 
 
 class Post(BaseModel):
-
     STATUS = (
         (1, "Draft"),
         (2, "Publish")
@@ -145,7 +163,6 @@ class Post(BaseModel):
 
 
 class Event(BaseModel):
-
     STATUS = (
         (1, "Draft"),
         (2, "Publish")
@@ -160,6 +177,7 @@ class Event(BaseModel):
     city = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=500, null=True, blank=True)
     content = models.TextField()
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_creator')
     status = models.IntegerField(choices=STATUS, default=2)
 
     def __str__(self):

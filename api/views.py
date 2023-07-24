@@ -15,12 +15,12 @@ from .serializers import *
 
 # Create your views here.
 class SignUpView(generics.CreateAPIView):
-    serializer_class = UserSerializer
+    serializer_class = DonorSerializer
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         try:
-            if User.objects.filter(email=request.data['email']).exists():
+            if Donor.objects.filter(email=request.data['email']).exists():
                 return Response({'message': 'Email is already Exist'}, status=status.HTTP_409_CONFLICT)
 
             if 'password' in request.data:
@@ -31,8 +31,8 @@ class SignUpView(generics.CreateAPIView):
             response = self.create(request, *args, **kwargs)
             ctx = response.data
             del response.data["password"]
-            response.data['gender'] = User.TYPE_CHOICES[int(response.data['gender']) - 1][1]
-            response.data['role'] = User.ROLE[int(response.data['role']) - 1][1]
+            response.data['gender'] = Donor.TYPE_CHOICES[int(response.data['gender']) - 1][1]
+            response.data['role'] = Donor.ROLE[int(response.data['role']) - 1][1]
             # response.data['registration_date'] = response.data["created_at"]
 
             # email_context = {'email': request.data['email'], 'first_name': response.data['first_name'],
@@ -57,17 +57,28 @@ class SignInView(generics.CreateAPIView):
                         return Response({"message": "Your account is suspended."}, status=status.HTTP_401_UNAUTHORIZED)
                     else:
                         login(request, user)
-                        ctx = []
-                        ctx = {'id': user.pk,
-                               'first_name': user.first_name,
-                               'last_name': user.last_name,
-                               'email': user.email,
-                               'phone_number': user.phone_number,
-                               'dob': user.dob,
-                               # 'gender': User.TYPE_CHOICES[int(user.gender) - 1][1],
-                               'university_name': user.university_name,
-                               'seat_no': user.seat_no,
-                               }
+                        if user.role == '3':
+                            donor = Donor.objects.get(user_ptr=user)
+                            ctx = []
+                            ctx = {'id': user.pk,
+                                   'first_name': user.first_name,
+                                   'last_name': user.last_name,
+                                   'email': user.email,
+                                   'phone_number': user.phone_number,
+                                   'dob': donor.dob,
+                                   # 'gender': Donor.TYPE_CHOICES[int(user.gender) - 1][1],
+                                   'university_name': donor.university_name.name,
+                                   'seat_no': donor.seat_no,
+                                   }
+
+                        # elif user.is_patient:
+                        #     patient = Patient.objects.get(user_ptr=user)
+                        #     date_of_birth = patient.date_of_birth
+                        #     # Add other patient-specific fields as needed
+                        #
+                        # else:
+                        #     # Handle other user types if necessary
+                        #     date_of_birth = None
 
                         return Response(ctx, status=status.HTTP_200_OK)
                 else:
@@ -77,13 +88,13 @@ class SignInView(generics.CreateAPIView):
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
-    queryset = User.objects.filter(is_deleted=False)
-    serializer_class = UserSerializer
+    queryset = Donor.objects.filter(is_deleted=False)
+    serializer_class = DonorSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk, *args, **kwargs):
         try:
-            query_set = User.objects.filter(pk=pk, is_deleted=False)
+            query_set = Donor.objects.filter(pk=pk, is_deleted=False)
             if query_set.exists():
 
                 user_detail = query_set.values('id', 'first_name', 'last_name', 'email', 'phone_number', 'image_url',
@@ -98,7 +109,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                        'phone_number': user_detail[0]["phone_number"],
                        'image_url': user_detail[0]["image_url"],
                        'dob': user_detail[0]["dob"],
-                       'gender': User.TYPE_CHOICES[int(user_detail[0]["gender"]) - 1][1],
+                       'gender': Donor.TYPE_CHOICES[int(user_detail[0]["gender"]) - 1][1],
                        'city': user_detail[0]["city"],
                        'address': user_detail[0]["address"],
                        'university_name': university_name.name,
@@ -109,32 +120,32 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 return Response(ctx, status=status.HTTP_200_OK)
             else:
 
-                return Response({'message': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'message': 'Donor does not exist'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk, *args, **kwargs):
         try:
-            user_detail = User.objects.filter(pk=pk, is_deleted=False)
+            user_detail = Donor.objects.filter(pk=pk, is_deleted=False)
             if user_detail.exists():
                 response = self.partial_update(request, *args, **kwargs)
-                response.data["gender"] = User.TYPE_CHOICES[int(response.data["gender"]) - 1][1]
+                response.data["gender"] = Donor.TYPE_CHOICES[int(response.data["gender"]) - 1][1]
                 del response.data["password"]
                 return response
             else:
-                return Response({'message': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'message': 'Donor does not exist'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListDonorsView(generics.ListAPIView):
-    queryset = User.objects.filter(is_deleted=False, role='3')
-    serializer_class = UserSerializer
+    queryset = Donor.objects.filter(is_deleted=False, role='3')
+    serializer_class = DonorSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         try:
-            query_set = User.objects.filter(is_deleted=False, role='3')
+            query_set = Donor.objects.filter(is_deleted=False, role='3')
             if query_set.exists():
                 result = []
                 user_detail = query_set.values('id', 'first_name', 'last_name', 'email', 'phone_number', 'image_url',
@@ -149,7 +160,7 @@ class ListDonorsView(generics.ListAPIView):
                            'phone_number': user["phone_number"],
                            'image_url': user["image_url"],
                            'dob': user["dob"],
-                           'gender': User.TYPE_CHOICES[int(user["gender"]) - 1][1],
+                           'gender': Donor.TYPE_CHOICES[int(user["gender"]) - 1][1],
                            'city': user["city"],
                            'address': user["address"],
                            'university_name': university_name.name,
@@ -160,7 +171,7 @@ class ListDonorsView(generics.ListAPIView):
                 return Response(result, status=status.HTTP_200_OK)
             else:
 
-                return Response({'message': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'message': 'Donor does not exist'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
