@@ -1,3 +1,7 @@
+import string
+from random import randint
+import random
+
 from django.shortcuts import render
 from rest_framework import viewsets, generics, status
 from rest_framework.decorators import permission_classes
@@ -7,10 +11,17 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.response import Response
 import requests
 from blood_donation import settings
+from .hooks import AccountDefaultHookSet
 from .models import *
 from django.utils.crypto import get_random_string
 
 from .serializers import *
+
+
+def generate_password():
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(10))
+    return result_str
 
 
 # Create your views here.
@@ -138,6 +149,60 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# user change his password
+class UserChangePasswordView(generics.UpdateAPIView):
+    serializer_class = UpdatePasswordSerializer
+
+    def put(self, request, user_id, *args, **kwargs):
+        try:
+            serializer = UpdatePasswordSerializer(data=request.data)
+
+            serializer.is_valid(raise_exception=True)
+
+            if request.data["password"] != request.data["new_password"]:
+
+                user_details = User.objects.filter(pk=user_id, is_deleted=False)
+                if user_details.count() > 0:
+                    if check_password(request.data['password'], user_details[0].password):
+                        user_details.update(password=make_password(request.data["new_password"]))
+
+                        return Response({"message": "password update successfully"}, status=status.HTTP_200_OK)
+                    else:
+                        return Response({"message": "Invalid password"}, status=status.HTTP_403_FORBIDDEN)
+
+                return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({"message": "Use an other password!"}, status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserForgotPasswordView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = ForgotPasswordSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user_details = User.objects.filter(email=request.data['email'], is_deleted=False)
+
+            if user_details.count() > 0:
+                gen_pass = generate_password()
+                user = user_details.first()
+                new_pass = gen_pass
+                user.password = make_password(new_pass)
+                user.save()
+                email_context = {'email': user.email, 'new_password': new_pass}
+                AccountDefaultHookSet.forgot_password_email(self, email_context)
+                return Response(
+                    {"message": "password send on Register email address successfully"},
+                    status=status.HTTP_200_OK)
+
+            return Response({"message": "Email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ListDonorsView(generics.ListAPIView):
     queryset = Donor.objects.filter(is_deleted=False, role='3')
     serializer_class = DonorSerializer
@@ -174,7 +239,6 @@ class ListDonorsView(generics.ListAPIView):
                 return Response({'message': 'Donor does not exist'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class UniversityNameView(generics.ListCreateAPIView):
@@ -319,6 +383,75 @@ class EventRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Event.objects.filter(is_deleted=False)
     serializer_class = EventSerializer
     permission_classes = [IsAuthenticated]
+
+
+class DonationView(generics.ListCreateAPIView):
+    queryset = Donation.objects.filter(is_deleted=False)
+    serializer_class = DonationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            query_set = Donation.objects.filter(is_deleted=False)
+            if query_set.exists():
+                result = []
+                donation_detail = query_set.values('id', 'donor', 'hospital_name', 'blood_group', 'quantity', 'report',
+                                                   'donation_date', 'expiry_date')
+                for donation in donation_detail:
+                    donor = Donor.objects.get(pk=donation_detail[0]["donor"], is_deleted=False)
+                    hospital = Hospital.objects.get(pk=donation_detail[0]["hospital_name"], is_deleted=False)
+
+                    ctx = {'id': donation["id"],
+                           'donor': donor.email,
+                           'hospital_name': hospital.hospital_name,
+                           'blood_group': donation["blood_group"],
+                           'quantity': donation["quantity"],
+                           'report': donation["report"],
+                           'donation_date': donation["donation_date"],
+                           'expiry_date': donation["expiry_date"]
+                           }
+                    result.append(ctx)
+                return Response(result, status=status.HTTP_200_OK)
+
+            else:
+                return Response({'message': 'Donation does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DonationRUDView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Donation.objects.filter(is_deleted=False)
+    serializer_class = DonationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            query_set = Donation.objects.filter(pk=pk, is_deleted=False)
+            if query_set.exists():
+                result = []
+                donation_detail = query_set.values('id', 'donor', 'hospital_name', 'blood_group', 'quantity', 'report',
+                                                   'donation_date', 'expiry_date')
+                donor = Donor.objects.get(pk=donation_detail[0]["donor"], is_deleted=False)
+                hospital = Hospital.objects.get(pk=donation_detail[0]["hospital_name"], is_deleted=False)
+
+                ctx = {'id': donation_detail[0]["id"],
+                       'donor': donor.email,
+                       'hospital_name': hospital.hospital_name,
+                       'blood_group': donation_detail[0]["blood_group"],
+                       'quantity': donation_detail[0]["quantity"],
+                       'report': donation_detail[0]["report"],
+                       'donation_date': donation_detail[0]["donation_date"],
+                       'expiry_date': donation_detail[0]["expiry_date"]
+                       }
+                return Response(ctx, status=status.HTTP_200_OK)
+
+            else:
+                return Response({'message': 'Blog Post does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # // T o k e n i z a t i on // #

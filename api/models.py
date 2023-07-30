@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -142,7 +144,29 @@ class Hospital(User):
         verbose_name_plural = 'hospitals'
 
     def __str__(self):
-        return self.email
+        return self.hospital_name
+
+
+def report_path(instance, filename):
+    return 'user_{0}/{1}'.format(instance.donor_id, filename)
+
+
+class Donation(BaseModel):
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, null=True, related_name='donor')
+    hospital_name = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=True, related_name='hospital')
+    blood_group = models.CharField(max_length=15, null=True, blank=True)
+    quantity = models.CharField(max_length=25, null=True, blank=True)
+    report = models.FileField(upload_to=report_path, blank=True, null=True)
+    donation_date = models.DateTimeField(null=True, blank=True)
+    expiry_date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'Donation'
+        verbose_name = 'Donation'
+        verbose_name_plural = 'Donations'
+
+    def __str__(self):
+        return self.blood_group
 
 
 class Post(BaseModel):

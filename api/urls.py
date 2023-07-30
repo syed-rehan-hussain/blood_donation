@@ -7,6 +7,8 @@ from api.views import *
 urlpatterns = [
     path('sign-up', SignUpView.as_view(), name='user_sign_up'),
     path('sign-in', SignInView.as_view(), name='user_sign_in'),
+    path('users/<int:user_id>/change-password', UserChangePasswordView.as_view(), name='user_change_password'),
+    path('users/forgot-password', UserForgotPasswordView.as_view(), name="user_forgot_password"),
     path('list_donors', ListDonorsView.as_view(), name='list_donors'),
     path('university', UniversityNameView.as_view(), name='university'),
     path('university/<int:pk>', UniversityNameRUDView.as_view(), name='university_details'),
@@ -19,6 +21,9 @@ urlpatterns = [
     path('event', EventView.as_view(), name='event'),
     path('publish_event', PublishedEventView.as_view(), name='publish_event'),
     path('event/<int:pk>', EventRUDView.as_view(), name='event_details'),
+    path('donation', DonationView.as_view(), name='donation'),
+    path('donation/<int:pk>', DonationRUDView.as_view(), name='donation_details'),
+
 
     # *****************************Aouth2.0 Authentications*************************
     path('token', Token.as_view(), name='token'),

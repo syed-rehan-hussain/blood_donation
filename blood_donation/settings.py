@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'corsheaders',
     'api',
     'rest_framework',
@@ -156,4 +157,18 @@ LOGIN_URL = '/admin/login/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
+SITE_ID = 1
+
+ACCOUNT_HOOKSET = 'api.hooks.AccountDefaultHookSet'
+AUTH_USER_MODEL = 'api.user'
+# Default primary key field type
+# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_HOST = 'smtp.dreamhost.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'send@sanmiwago.artextcreation.com'
+EMAIL_HOST_PASSWORD = 'San@miwago021'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'send@sanmiwago.artextcreation.com'
