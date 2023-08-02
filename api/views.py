@@ -35,15 +35,33 @@ class SignUpView(generics.CreateAPIView):
                 return Response({'message': 'Email is already Exist'}, status=status.HTTP_409_CONFLICT)
 
             if 'password' in request.data:
+                password_token = request.data['password']
                 request.data['password'] = make_password(request.data['password'])
                 # university = UniversityName.objects.get(pk=request.data['university_name'], is_deleted=False)
                 # request.data['university_name'] = university
 
             response = self.create(request, *args, **kwargs)
             ctx = response.data
+            r = requests.post(
+                settings.base_url_auth + '/o/token/',
+                data={
+                    'grant_type': 'password',
+                    'username': request.data['email'],
+                    'password': password_token,
+                    'client_id': settings.CLIENT_ID,
+                    'client_secret': settings.CLIENT_SECRET,
+                },
+            )
+            ctx['access_token'] = r.json()['access_token']
+            ctx['expires_in'] = r.json()['expires_in']
+            ctx['token_type'] = r.json()['token_type']
+            ctx['scope'] = r.json()['scope']
+            ctx['refresh_token'] = r.json()['refresh_token']
             del response.data["password"]
             response.data['gender'] = Donor.TYPE_CHOICES[int(response.data['gender']) - 1][1]
             response.data['role'] = Donor.ROLE[int(response.data['role']) - 1][1]
+
+
             # response.data['registration_date'] = response.data["created_at"]
 
             # email_context = {'email': request.data['email'], 'first_name': response.data['first_name'],
@@ -57,6 +75,7 @@ class SignUpView(generics.CreateAPIView):
 
 
 class SignInView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         try:
@@ -71,6 +90,16 @@ class SignInView(generics.CreateAPIView):
                         if user.role == '3':
                             donor = Donor.objects.get(user_ptr=user)
                             ctx = []
+                            r = requests.post(
+                                settings.base_url_auth + '/o/token/',
+                                data={
+                                    'grant_type': 'password',
+                                    'username': request.data['email'],
+                                    'password': request.data['password'],
+                                    'client_id': settings.CLIENT_ID,
+                                    'client_secret': settings.CLIENT_SECRET,
+                                },
+                            )
                             ctx = {'id': user.pk,
                                    'first_name': user.first_name,
                                    'last_name': user.last_name,
@@ -80,7 +109,14 @@ class SignInView(generics.CreateAPIView):
                                    # 'gender': Donor.TYPE_CHOICES[int(user.gender) - 1][1],
                                    'university_name': donor.university_name.name,
                                    'seat_no': donor.seat_no,
+                                   'access_token': r.json()['access_token'],
+                                   'expires_in': r.json()['expires_in'],
+                                   'token_type': r.json()['token_type'],
+                                   'scope': r.json()['scope'],
+                                   'refresh_token': r.json()['refresh_token']
+
                                    }
+
 
                         # elif user.is_patient:
                         #     patient = Patient.objects.get(user_ptr=user)
