@@ -489,6 +489,33 @@ class DonationRUDView(generics.RetrieveUpdateDestroyAPIView):
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class DashboardView(generics.ListAPIView):
+    queryset = Donor.objects.filter(is_deleted=False)
+    serializer_class = DonorSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+
+            donor = Donor.objects.filter(is_deleted=False).count()
+            event = Event.objects.filter(is_deleted=False).count()
+            blog = Post.objects.filter(is_deleted=False).count()
+            Volunteer = User.objects.filter(is_deleted=False, role=2).count()
+            donation = Donation.objects.filter(is_deleted=False).count()
+
+            ctx = {
+                   'donor': donor,
+                   'event': event,
+                   'blog': blog,
+                   'Volunteer': Volunteer,
+                   'donation': donation,
+                   }
+            return Response(ctx, status=status.HTTP_200_OK)
+
+            # return Response({'message': 'Blog Post does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 # // T o k e n i z a t i on // #
 

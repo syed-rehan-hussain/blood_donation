@@ -23,6 +23,7 @@ urlpatterns = [
     path('event/<int:pk>', EventRUDView.as_view(), name='event_details'),
     path('donation', DonationView.as_view(), name='donation'),
     path('donation/<int:pk>', DonationRUDView.as_view(), name='donation_details'),
+    path('dashboard', DashboardView.as_view(), name='dashboard'),
 
 
     # *****************************Aouth2.0 Authentications*************************

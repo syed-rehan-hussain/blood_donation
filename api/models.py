@@ -130,6 +130,7 @@ class Donor(User):
         db_table = 'donor'
         verbose_name = 'donor'
         verbose_name_plural = 'donors'
+        ordering = ('-created_at',)
 
     def __str__(self):
         return self.email
@@ -205,4 +206,4 @@ class Event(BaseModel):
     status = models.IntegerField(choices=STATUS, default=2)
 
     def __str__(self):
-        return self.title
+        return self.event_name
