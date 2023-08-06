@@ -45,24 +45,7 @@ class SignUpView(generics.CreateAPIView):
 
             response = self.create(request, *args, **kwargs)
             ctx = response.data
-            if post_data['token'] == 'false':
-                pass
-            else:
-                r = requests.post(
-                    settings.base_url_auth + '/o/token/',
-                    data={
-                        'grant_type': 'password',
-                        'username': post_data['email'],
-                        'password': password_token,
-                        'client_id': settings.CLIENT_ID,
-                        'client_secret': settings.CLIENT_SECRET,
-                    },
-                )
-                ctx['access_token'] = r.json()['access_token']
-                ctx['expires_in'] = r.json()['expires_in']
-                ctx['token_type'] = r.json()['token_type']
-                ctx['scope'] = r.json()['scope']
-                ctx['refresh_token'] = r.json()['refresh_token']
+
             del response.data["password"]
             response.data['gender'] = Donor.TYPE_CHOICES[int(response.data['gender']) - 1][1]
             response.data['role'] = Donor.ROLE[int(response.data['role']) - 1][1]
