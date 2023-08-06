@@ -36,27 +36,33 @@ class SignUpView(generics.CreateAPIView):
 
             if 'password' in request.data:
                 password_token = request.data['password']
-                request.data['password'] = make_password(request.data['password'])
+                hashed_password = make_password(request.data['password'])
                 # university = UniversityName.objects.get(pk=request.data['university_name'], is_deleted=False)
                 # request.data['university_name'] = university
+            # Create a new dictionary for the POST request
+            post_data = request.data.copy()
+            post_data['password'] = hashed_password
 
             response = self.create(request, *args, **kwargs)
             ctx = response.data
-            r = requests.post(
-                settings.base_url_auth + '/o/token/',
-                data={
-                    'grant_type': 'password',
-                    'username': request.data['email'],
-                    'password': password_token,
-                    'client_id': settings.CLIENT_ID,
-                    'client_secret': settings.CLIENT_SECRET,
-                },
-            )
-            ctx['access_token'] = r.json()['access_token']
-            ctx['expires_in'] = r.json()['expires_in']
-            ctx['token_type'] = r.json()['token_type']
-            ctx['scope'] = r.json()['scope']
-            ctx['refresh_token'] = r.json()['refresh_token']
+            if post_data['token'] == 'false':
+                pass
+            else:
+                r = requests.post(
+                    settings.base_url_auth + '/o/token/',
+                    data={
+                        'grant_type': 'password',
+                        'username': post_data['email'],
+                        'password': password_token,
+                        'client_id': settings.CLIENT_ID,
+                        'client_secret': settings.CLIENT_SECRET,
+                    },
+                )
+                ctx['access_token'] = r.json()['access_token']
+                ctx['expires_in'] = r.json()['expires_in']
+                ctx['token_type'] = r.json()['token_type']
+                ctx['scope'] = r.json()['scope']
+                ctx['refresh_token'] = r.json()['refresh_token']
             del response.data["password"]
             response.data['gender'] = Donor.TYPE_CHOICES[int(response.data['gender']) - 1][1]
             response.data['role'] = Donor.ROLE[int(response.data['role']) - 1][1]
