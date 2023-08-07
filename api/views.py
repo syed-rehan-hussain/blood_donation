@@ -266,6 +266,42 @@ class ListDonorsView(generics.ListAPIView):
             return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ListHospitalDonorsView(generics.ListAPIView):
+    queryset = Donor.objects.filter(is_deleted=False, role='3')
+    serializer_class = DonorSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            # query_set = Donor.objects.filter(is_deleted=False, role='3')
+            query_set = Donation.objects.filter(is_deleted=False, hospital_name=pk).values('donor').distinct()
+            if query_set.exists():
+                result = []
+                for user in query_set:
+                    donor = Donor.objects.get(pk=user['donor'], is_deleted=False)
+                    university_name = UniversityName.objects.get(pk=donor.university_name_id, is_deleted=False)
+                    ctx = {'id': donor.id,
+                           'first_name': donor.first_name,
+                           'last_name': donor.last_name,
+                           'email': donor.email,
+                           'phone_number': donor.phone_number,
+                           'dob': donor.dob,
+                           'gender': Donor.TYPE_CHOICES[int(donor.gender) - 1][1],
+                           'city': donor.city,
+                           'address': donor.address,
+                           'university_name': university_name.name,
+                           'seat_no': donor.seat_no,
+                           'blood_group': donor.blood_group,
+                           'no_of_donations': donor.no_of_donations}
+                    result.append(ctx)
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+
+                return Response({'message': 'Donor does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UniversityNameView(generics.ListCreateAPIView):
     queryset = UniversityName.objects.filter(is_deleted=False)
     serializer_class = UniversityNameSerializer
