@@ -35,15 +35,11 @@ class SignUpView(generics.CreateAPIView):
                 return Response({'message': 'Email is already Exist'}, status=status.HTTP_409_CONFLICT)
 
             if 'password' in request.data:
-                password_token = request.data['password']
                 hashed_password = make_password(request.data['password'])
-                # university = UniversityName.objects.get(pk=request.data['university_name'], is_deleted=False)
-                # request.data['university_name'] = university
-            # Create a new dictionary for the POST request
-            post_data = request.data.copy()
-            post_data['password'] = hashed_password
 
             response = self.create(request, *args, **kwargs)
+            user = User.objects.filter(pk=response.data['id'], is_deleted=False)
+            user.update(password=hashed_password)
             ctx = response.data
 
             del response.data["password"]
@@ -64,6 +60,7 @@ class SignUpView(generics.CreateAPIView):
 
 
 class SignInView(generics.CreateAPIView):
+    serializer_class = LoginSerializer
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
