@@ -10,6 +10,7 @@ urlpatterns = [
     path('users/<int:user_id>/change-password', UserChangePasswordView.as_view(), name='user_change_password'),
     path('users/forgot-password', UserForgotPasswordView.as_view(), name="user_forgot_password"),
     path('list_donors', ListDonorsView.as_view(), name='list_donors'),
+    path('list_hospital_donors/<int:pk>', ListHospitalDonorsView.as_view(), name='list_donors_by_hospital'),
     path('university', UniversityNameView.as_view(), name='university'),
     path('university/<int:pk>', UniversityNameRUDView.as_view(), name='university_details'),
     path('users/<int:pk>/profile', UserDetailView.as_view(), name='users_details'),
