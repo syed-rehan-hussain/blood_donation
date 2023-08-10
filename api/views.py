@@ -339,7 +339,7 @@ class PostView(generics.ListCreateAPIView):
                     category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
 
                     ctx = {'id': post["id"],
-                           'image_url': settings.base_url_auth+"/media"+post_detail[0]["image_url"],
+                           'image_url': settings.base_url_auth+"/media/"+post_detail[0]["image_url"],
                            'title': post["title"],
                            'slug': post["slug"],
                            'author': post["author"],
@@ -373,7 +373,7 @@ class PublishedPostView(generics.ListAPIView):
                     category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
 
                     ctx = {'id': post["id"],
-                           'image_url': settings.base_url_auth+"/media"+post_detail[0]["image_url"],
+                           'image_url': settings.base_url_auth+"/media/"+post_detail[0]["image_url"],
                            'title': post["title"],
                            'slug': post["slug"],
                            'author': post["author"],
