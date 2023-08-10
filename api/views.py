@@ -339,11 +339,10 @@ class PostView(generics.ListCreateAPIView):
                     category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
 
                     ctx = {'id': post["id"],
-                           'image_url': post["image_url"],
+                           'image_url': settings.base_url_auth+"/media"+post_detail[0]["image_url"],
                            'title': post["title"],
                            'slug': post["slug"],
                            'author': post["author"],
-                           'image_url': post["image_url"],
                            'category': category_name.name,
                            'content': post["content"],
                            'status': Post.STATUS[int(post["status"]) - 1][1]
@@ -374,11 +373,10 @@ class PublishedPostView(generics.ListAPIView):
                     category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
 
                     ctx = {'id': post["id"],
-                           'image_url': post["image_url"],
+                           'image_url': settings.base_url_auth+"/media"+post_detail[0]["image_url"],
                            'title': post["title"],
                            'slug': post["slug"],
                            'author': post["author"],
-                           'image_url': post["image_url"],
                            'category': category_name.name,
                            'content': post["content"],
                            'status': Post.STATUS[int(post["status"]) - 1][1]
@@ -407,11 +405,10 @@ class PostRUDView(generics.RetrieveUpdateDestroyAPIView):
                 category_name = Category.objects.get(pk=post_detail[0]["category"], is_deleted=False)
 
                 ctx = {'id': post_detail[0]["id"],
-                       'image_url': post_detail[0]["image_url"],
+                       'image_url': settings.base_url_auth+"/media/"+post_detail[0]["image_url"],
                        'title': post_detail[0]["title"],
                        'slug': post_detail[0]["slug"],
                        'author': post_detail[0]["author"],
-                       'image_url': post_detail[0]["image_url"],
                        'category': category_name.name,
                        'content': post_detail[0]["content"],
                        'status': Post.STATUS[int(post_detail[0]["status"]) - 1][1]
